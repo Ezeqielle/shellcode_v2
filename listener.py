@@ -58,6 +58,7 @@ def send_commands(conn):
             s.close()
             sys.exit()
         if len(str.encode(cmd)) > 0:  # system commands are bytes and not strings
+            cmd = '"' + cmd + '"'
             i = 1
             reversed_cmd = ""
             tmp_cmd = ""
@@ -68,11 +69,11 @@ def send_commands(conn):
                     cmd_list.insert(0, tmp_cmd)
                     tmp_cmd = ""
                 i += 1
-                
-            cmd_list.insert(0, tmp_cmd)
+            tmp_len = 8 - len(tmp_cmd)
+            cmd_list.insert(0, tmp_cmd + '\n'*tmp_len)
             for cmd_string in cmd_list:
                 reversed_cmd += cmd_string
-            conn.send(str.encode('"'+reversed_cmd+'\n'))
+            conn.send(str.encode(reversed_cmd+'\x04'))
             
 
 

