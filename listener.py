@@ -58,7 +58,6 @@ def send_commands(conn):
             s.close()
             sys.exit()
         if len(str.encode(cmd)) > 0:  # system commands are bytes and not strings
-            cmd = '"' + cmd + '"'
             i = 1
             reversed_cmd = ""
             tmp_cmd = ""
