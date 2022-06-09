@@ -44,9 +44,8 @@ def socket_accept():
 
 # Receives commands 
 def recv_command_res(conn):
-	while True:
-		client_response = str(conn.recv(1024), 'utf-8')
-		print(client_response, end='')
+    while True:
+        print(conn.recv(1024))#client_response = str(conn.recv(1024), 'utf-8')#print(client_response, end='')
 
 
 #  Send commands
