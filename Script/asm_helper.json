@@ -1,0 +1,242 @@
+{
+    "push": {
+        "parsing_args": [
+            " "
+        ],
+        "equivalent_mods": []
+    },
+    "pop": {
+        "parsing_args": [
+            " "
+        ],
+        "equivalent_mods": []
+    },
+    "mov": {
+        "parsing_args": [
+            ","
+        ],
+        "equivalent_mods": [
+            {
+                "args": [
+                    "reg_1",
+                    "reg_2"
+                ],
+                "rep": [
+                    [
+                        [
+                            "push",
+                            "reg_2"
+                        ],
+                        [
+                            "pop",
+                            "reg_1"
+                        ]
+                    ],
+                    [
+                        [
+                            "push",
+                            "reg_2"
+                        ],
+                        [
+                            "mov",
+                            "reg_1",
+                            "[rsp]"
+                        ],
+                        [
+                            "pop",
+                            "reg_2"
+                        ]
+                    ]
+                ]
+            },
+            {
+                "args": [
+                    "reg_1",
+                    "value_1"
+                ],
+                "rep": [
+                    [
+                        [
+                            "mov",
+                            "reg_1",
+                            "value_1-1"
+                        ],
+                        [
+                            "inc",
+                            "reg_1"
+                        ]
+                    ],
+                    [
+                        [
+                            "mov",
+                            "reg_1",
+                            "value_1+1"
+                        ],
+                        [
+                            "dec",
+                            "reg_1"
+                        ]
+                    ],
+                    [
+                        [
+                            "mov",
+                            "reg_1",
+                            "value_1+rand_1"
+                        ],
+                        [
+                            "sub",
+                            "reg_1",
+                            "rand_1"
+                        ]
+                    ],
+                    [
+                        [
+                            "push",
+                            "rcx"
+                        ],
+                        [
+                            "mov",
+                            "rcx",
+                            "value_1"
+                        ],
+                        [
+                            "mov",
+                            "reg_1",
+                            "rcx"
+                        ],
+                        [
+                            "pop",
+                            "rcx"
+                        ]
+                    ]
+                ]
+            }
+        ]
+    },
+    "xor": {
+        "parsing_args": [
+            ","
+        ],
+        "equivalent_mods": [
+            {
+                "args": [
+                    "reg_1",
+                    "reg_1"
+                ],
+                "rep": [
+                    [
+                        [
+                            "xor",
+                            "reg_1",
+                            "reg_1"
+                        ],
+                        [
+                            "inc",
+                            "reg_1"
+                        ],
+                        [
+                            "dec",
+                            "reg_1"
+                        ]
+                    ],
+                    [
+                        [
+                            "xor",
+                            "reg_1",
+                            "reg_1"
+                        ],
+                        [
+                            "add",
+                            "reg_1",
+                            "rand_1"
+                        ],
+                        [
+                            "sub",
+                            "reg_1",
+                            "rand_1"
+                        ]
+                    ],
+                    [
+                        [
+                            "push",
+                            "0x01"
+                        ],
+                        [
+                            "pop",
+                            "reg_1"
+                        ],
+                        [
+                            "dec",
+                            "reg_1"
+                        ]
+                    ],
+                    [
+                        [
+                            "push",
+                            "rand_1"
+                        ],
+                        [
+                            "pop",
+                            "reg_1"
+                        ],
+                        [
+                            "sub",
+                            "reg_1",
+                            "rand_1"
+                        ]
+                    ]
+                ]
+            }
+        ]
+    },
+    "dec": {
+        "parsing_args": [
+            " "
+        ],
+        "equivalent_mods": []
+    },
+    "inc": {
+        "parsing_args": [
+            " "
+        ],
+        "equivalent_mods": []
+    },
+    "sub": {
+        "parsing_args": [
+            ","
+        ],
+        "equivalent_mods": []
+    },
+    "add": {
+        "parsing_args": [
+            ","
+        ],
+        "equivalent_mods": []
+    },
+    "syscall": {
+        "parsing_args": [],
+        "equivalent_mods": []
+    },
+    "BITS": {
+        "parsing_args": [
+            " "
+        ],
+        "equivalent_mods": []
+    },
+    "SECTION": {
+        "parsing_args": [
+            " "
+        ],
+        "equivalent_mods": []
+    },
+    "global": {
+        "parsing_args": [
+            " "
+        ],
+        "equivalent_mods": []
+    },
+    "_start:": {
+        "parsing_args": [],
+        "equivalent_mods": []
+    }
+}
